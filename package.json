@@ -1,0 +1,30 @@
+{
+  "name": "beMyGuest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --inspect-brk src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yingyuk/beMyGuest.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yingyuk/beMyGuest/issues"
+  },
+  "homepage": "https://github.com/yingyuk/beMyGuest#readme",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "cheerio": "^1.0.0-rc.1",
+    "express": "^4.15.3",
+    "nightmare": "^2.10.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.0.0"
+  }
+}
