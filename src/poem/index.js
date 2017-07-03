@@ -36,5 +36,5 @@ async function fetchData(_uri) {
 }
 (async () => {
   const data = await fetchData(uri);
-  fs.writeFileSync(path.join(__dirname, 'data.log'), JSON.stringify(data, null, '  '), 'utf8');
+  fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data, null, '  '), 'utf8');
 })();

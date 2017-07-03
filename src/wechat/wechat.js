@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const cheerio = require('cheerio');
 const axios = require('axios');
 
@@ -67,9 +65,14 @@ function foundMatch(str, regexs) {
 // 提取作品名字
 function parseWorks(text) {
   const regexs = [
-    /作品([\w\s-&]*)[。,.]?/gi, // 作品Prelude-BWV 846 Piano&Cello，
-    /(?!作品)《(.*?)》/gi, // 作品《夜鸟》，由职业
+    // 作品Prelude-BWV 846 Piano&Cello，
     // 家泽野弘之的作品mein Mädchen [für Cello]。是非对错的界域之外，有一片田野，我
+    /作品([\p{L}\p{N}\w _\-\[\]&]*)[，。,.]?/gi,
+    /(?!作品)《(.*?)》/gi, // 作品《夜鸟》，由职业
+    // /(?!配乐：)(.*?)[配乐]?/gi, 
+    // 配乐：John Williams-The Chairman's Waltz
+    // 配乐：月影湖光 - 常静配乐：清晨的芬芳 - 白日梦
+    /(?!配乐：)([^配乐：]+)/gi,
   ];
   const ret = foundMatch(text, regexs);
   return ret;
@@ -84,29 +87,33 @@ function parseSpecial(text) {
   return ret;
 }
 
-function extractInfo(text) {
-  const works = parseWorks(text); // 提取作品名字
-  const special = parseSpecial(text); // 提取专辑名字
-  return {
-    works,
-    special,
-  };
-}
-
 // 解析每首诗歌的数据
 async function fetchSpecial(poem) {
-  const { data } = await axios.get(poem.href); // 获取微信网页数据
-  const $ = cheerio.load(data); // 导入数据
-  const text = parseMusic($); // 解析文本
-  const image = parseImage($); // 提取图片地址
+  if (!poem.href) {
+    return poem;
+  }
+  let text = poem.text;
+  let image = poem.image;
+  if (!text || !image) {
+    console.info(poem.serialNum);
+    const { data } = await axios.get(poem.href); // 获取微信网页数据
+    const $ = cheerio.load(data); // 导入数据
+    text = parseMusic($); // 解析文本
+    image = parseImage($); // 提取图片地址
+  }
+  const works = parseWorks(text); // 提取作品名字
+  const special = parseSpecial(text); // 提取专辑名字
 
-  const info = extractInfo(text);
   // 合并最终数据
   return Object.assign({}, poem, {
     text,
     image,
-  }, info);
+    works,
+    special,
+  });
 }
+
+module.exports = fetchSpecial;
 
 // async function exec() {
 //   let resultArr = [];
@@ -129,26 +136,26 @@ async function fetchSpecial(poem) {
 //   fs.writeFileSync(path.join(__dirname, 'empty.log'), JSON.stringify(emptyArr, null, '  '), 'utf8');
 // }
 
-async function exec() {
-  let resultArr = [];
-  const emptyArr = [];
-  let index = 15;
-  while (index >= 0) {
-    const dataStr = fs.readFileSync(path.join(__dirname, `wechat-${index}.log`), 'utf8');
-    const dataArr = JSON.parse(dataStr);
-    for (const item of dataArr) {
-      const info = extractInfo(item.text);
-      const result = Object.assign({}, item, info);
-      if (!result.works.length) {
-        emptyArr.push(result);
-      }
-      resultArr.push(result);
-    }
-    fs.writeFileSync(path.join(__dirname, 'dist', `wechat-${index}.log`), JSON.stringify(resultArr, null, '  '), 'utf8');
-    resultArr = [];
-    index -= 1;
-  }
-  fs.writeFileSync(path.join(__dirname, 'dist', 'empty.log'), JSON.stringify(emptyArr, null, '  '), 'utf8');
-}
+// async function exec() {
+//   let resultArr = [];
+//   const emptyArr = [];
+//   let index = 15;
+//   while (index >= 0) {
+//     const dataStr = fs.readFileSync(path.join(__dirname, `wechat-${index}.log`), 'utf8');
+//     const dataArr = JSON.parse(dataStr);
+//     for (const item of dataArr) {
+//       const info = extractInfo(item.text);
+//       const result = Object.assign({}, item, info);
+//       if (!result.works.length) {
+//         emptyArr.push(result);
+//       }
+//       resultArr.push(result);
+//     }
+//     fs.writeFileSync(path.join(__dirname, 'dist', `wechat-${index}.log`), JSON.stringify(resultArr, null, '  '), 'utf8');
+//     resultArr = [];
+//     index -= 1;
+//   }
+//   fs.writeFileSync(path.join(__dirname, 'dist', 'empty.log'), JSON.stringify(emptyArr, null, '  '), 'utf8');
+// }
 
-exec();
+// exec();
